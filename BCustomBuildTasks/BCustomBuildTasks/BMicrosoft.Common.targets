@@ -16,7 +16,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 
 <Project DefaultTargets="Build" InitialTargets="_CheckForInvalidConfigurationAndPlatform" TreatAsLocalProperty="OutDir" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <UsingTask AssemblyFile="C:\projects\BCustomBuildTasks\BCustomBuildTasks\bin\Debug\BCustomBuildTasks.dll" TaskName="BResolveAssemblyReference" />
+  <UsingTask AssemblyFile="bin\Debug\BCustomBuildTasks.dll" TaskName="BResolveAssemblyReference" />
   <Target
       Name="ResolveAssemblyReferences"
       Returns="@(ReferencePath)"
