@@ -1,0 +1,115 @@
+<!--
+***********************************************************************************************
+Microsoft.Common.targets
+
+WARNING:  DO NOT MODIFY this file unless you are knowledgeable about MSBuild and have
+          created a backup copy.  Incorrect changes to this file will make it
+          impossible to load or build your projects from the command-line or the IDE.
+
+This file defines the steps in the standard build process for .NET projects.  It
+contains all the steps that are common among the different .NET languages, such as
+Visual Basic, and Visual C#.
+
+Copyright (C) Microsoft Corporation. All rights reserved.
+***********************************************************************************************
+-->
+
+<Project DefaultTargets="Build" InitialTargets="_CheckForInvalidConfigurationAndPlatform" TreatAsLocalProperty="OutDir" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask AssemblyFile="C:\projects\BCustomBuildTasks\BCustomBuildTasks\bin\Debug\BCustomBuildTasks.dll" TaskName="BResolveAssemblyReference" />
+  <Target
+      Name="ResolveAssemblyReferences"
+      Returns="@(ReferencePath)"
+      DependsOnTargets="$(ResolveAssemblyReferencesDependsOn)">
+
+    <ItemGroup>
+      <_ReferenceInstalledAssemblyDirectory Include="$(TargetFrameworkDirectory)" />
+      <_ReferenceInstalledAssemblySubsets Include="$(TargetFrameworkSubset)" />
+    </ItemGroup>
+
+    <!--
+        Only read and write cache file at build time, skip it for load time because its more
+        expensive to write the newly created cache file.
+        -->
+    <PropertyGroup>
+      <ResolveAssemblyReferencesStateFile Condition="'$(BuildingProject)'=='true'">$(IntermediateOutputPath)$(MSBuildProjectFile)ResolveAssemblyReference.cache</ResolveAssemblyReferencesStateFile>
+    </PropertyGroup>
+
+    <!-- Make an App.Config item that exists when AutoUnify is false. -->
+    <ItemGroup>
+      <_ResolveAssemblyReferencesApplicationConfigFileForExes Include="@(AppConfigWithTargetPath)" Condition="'$(AutoUnifyAssemblyReferences)'=='false'"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <!-- Default in task is true -->
+      <_FindDependencies Condition="'$(BuildingProject)' != 'true' and '$(_ResolveReferenceDependencies)' != 'true'">false</_FindDependencies>
+      <ResolveAssemblyReferencesSilent Condition="'$(ResolveAssemblyReferencesSilent)' == '' and '$(TraceDesignTime)' != 'true' and '$(BuildingProject)' == 'false'">true</ResolveAssemblyReferencesSilent>
+      <ResolveAssemblyReferencesSilent Condition="'$(ResolveAssemblyReferencesSilent)' == ''">false</ResolveAssemblyReferencesSilent>
+      <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch Condition="'$(ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch)' == ''">Warning</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <!-- Remove any references which we have added as explicit reference so that we do not get duplicates. We need to make sure we do not have duplicates
+             because this confuses the IDE  when it tries to compare the list of references passed in to the list of resolved references. If it does not match then the
+             ide will show one of the references as not resolved, this will not break the build but is a display issue -->
+      <Reference Remove="$(AdditionalExplicitAssemblyReferences)"/>
+      <Reference Include="$(AdditionalExplicitAssemblyReferences)">
+        <Implicit>true</Implicit>
+      </Reference>
+    </ItemGroup>
+
+    <BResolveAssemblyReference
+        Assemblies="@(Reference)"
+        AssemblyFiles="@(_ResolvedProjectReferencePaths);@(_ExplicitReference)"
+        TargetFrameworkDirectories="@(_ReferenceInstalledAssemblyDirectory)"
+        InstalledAssemblyTables="@(InstalledAssemblyTables);@(RedistList)"
+        IgnoreDefaultInstalledAssemblyTables="$(IgnoreDefaultInstalledAssemblyTables)"
+        IgnoreDefaultInstalledAssemblySubsetTables="$(IgnoreInstalledAssemblySubsetTables)"
+        CandidateAssemblyFiles="@(Content);@(None)"
+        SearchPaths="$(AssemblySearchPaths)"
+        AllowedAssemblyExtensions="$(AllowedReferenceAssemblyFileExtensions)"
+        AllowedRelatedFileExtensions="$(AllowedReferenceRelatedFileExtensions)"
+        TargetProcessorArchitecture="$(ProcessorArchitecture)"
+        AppConfigFile="@(_ResolveAssemblyReferencesApplicationConfigFileForExes)"
+        AutoUnify="$(AutoUnifyAssemblyReferences)"
+        IgnoreVersionForFrameworkReferences="$(IgnoreVersionForFrameworkReferences)"
+        FindDependencies="$(_FindDependencies)"
+        FindSatellites="$(BuildingProject)"
+        FindSerializationAssemblies="$(BuildingProject)"
+        FindRelatedFiles="$(BuildingProject)"
+        Silent="$(ResolveAssemblyReferencesSilent)"
+        TargetFrameworkVersion="$(TargetFrameworkVersion)"
+        TargetFrameworkMoniker="$(TargetFrameworkMoniker)"
+        TargetFrameworkMonikerDisplayName="$(TargetFrameworkMonikerDisplayName)"
+        TargetedRuntimeVersion="$(TargetedRuntimeVersion)"
+        StateFile="$(ResolveAssemblyReferencesStateFile)"
+        InstalledAssemblySubsetTables="@(InstalledAssemblySubsetTables)"
+        TargetFrameworkSubsets="@(_ReferenceInstalledAssemblySubsets)"
+        FullTargetFrameworkSubsetNames="$(FullReferenceAssemblyNames)"
+        FullFrameworkFolders="$(_FullFrameworkReferenceAssemblyPaths)"
+        FullFrameworkAssemblyTables="@(FullFrameworkAssemblyTables)"
+        ProfileName="$(TargetFrameworkProfile)"
+        LatestTargetFrameworkDirectories="@(LatestTargetFrameworkDirectories)"
+        CopyLocalDependenciesWhenParentReferenceInGac="$(CopyLocalDependenciesWhenParentReferenceInGac)"
+        ResolvedSDKReferences="@(ResolvedSDKReference)"
+        WarnOrErrorOnTargetArchitectureMismatch="$(ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch)"
+        IgnoreTargetFrameworkAttributeVersionMismatch ="$(ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch)"
+        ContinueOnError="$(ContinueOnError)"
+        Condition="'@(Reference)'!='' or '@(_ResolvedProjectReferencePaths)'!='' or '@(_ExplicitReference)' != ''"
+        >
+
+      <Output TaskParameter="ResolvedFiles" ItemName="ReferencePath"/>
+      <Output TaskParameter="ResolvedFiles" ItemName="_ResolveAssemblyReferenceResolvedFiles"/>
+      <Output TaskParameter="ResolvedDependencyFiles" ItemName="ReferenceDependencyPaths"/>
+      <Output TaskParameter="RelatedFiles" ItemName="_ReferenceRelatedPaths"/>
+      <Output TaskParameter="SatelliteFiles" ItemName="ReferenceSatellitePaths"/>
+      <Output TaskParameter="SerializationAssemblyFiles" ItemName="_ReferenceSerializationAssemblyPaths"/>
+      <Output TaskParameter="ScatterFiles" ItemName="_ReferenceScatterPaths"/>
+      <Output TaskParameter="CopyLocalFiles" ItemName="ReferenceCopyLocalPaths"/>
+      <Output TaskParameter="SuggestedRedirects" ItemName="SuggestedBindingRedirects"/>
+      <Output TaskParameter="FilesWritten" ItemName="FileWrites"/>
+
+    </BResolveAssemblyReference>
+  </Target>
+
+</Project>
