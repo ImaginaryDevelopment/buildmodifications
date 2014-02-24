@@ -22,3 +22,24 @@ another approach is which can be done via tfs build, but probably not directly f
 ```
 referenced from 
 http://stackoverflow.com/questions/1682096/how-do-i-override-copylocal-private-setting-for-references-in-net-from-msbuil
+
+
+another option to achieve a similar result with less code
+
+```
+	 <Target Name="BeforeBuild">
+	    <Message Importance="high" Text="Doing BeforeBuild" />
+	    <ItemGroup>
+	      <SharedAssemblyPathItem Include="$(SharedAssemblyPath)" />
+	      <AspWebReferencePathItem Include="$(AspWebReferencePath)" />
+	      <InfragisticsPathItem Include="$(InfragisticsPath)" />
+	    </ItemGroup>
+	    <Warning Condition="!Exists('@(SharedAssemblyPathItem)')" Text="SharedAssemblyPath not found at '@(SharedAssemblyPathItem)'" />
+	    <Warning Condition="!Exists('@(SharedAssemblyPathItem)')" Text="SharedAssemblyPath not found at '@(SharedAssemblyPathItem->'%(FullPath)')'" />
+	    <Warning Condition="!Exists('@(AspWebReferencePathItem)')" Text="AspWebReferencePath not found at '@(AspWebReferencePathItem)'" />
+	    <Warning Condition="!Exists('@(AspWebReferencePathItem)')" Text="AspWebReferencePath not found at '@(AspWebReferencePathItem->'%(FullPath)')'" />
+	    <Warning Condition="!Exists('@(InfragisticsPathItem)')" Text="InfragisticsPath not found at '@(InfragisticsPathItem)'" />
+	    <Message Text="InfragisticsPath is '@(InfragisticsPathItem)'" Importance="high" />
+	    <Message Condition="!Exists('%(Reference.HintPath)')" Text="FullPath=%(Reference.HintPath)" Importance="high" />
+	  </Target>
+```
