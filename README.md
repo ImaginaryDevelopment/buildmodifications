@@ -1,4 +1,4 @@
-buildmodifications
+buildmodifications [![Build status](https://ci.appveyor.com/api/projects/status/o4wam2kn7ip90c7s?svg=true)](https://ci.appveyor.com/project/ImaginaryDevelopment/buildmodifications)
 ==================
 
 my msbuild, tfs build, and other modification libraries
